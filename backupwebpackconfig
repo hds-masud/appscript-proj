@@ -22,8 +22,33 @@ const getSrcPath = (filePath) => {
 module.exports = {
   mode: 'none',
   context: __dirname,
+  entry: getSrcPath('/index.js'),
+  output: {
+    filename: `code.js`,
+    path: path.resolve(__dirname, 'dist'),
+  },
   resolve: {
     extensions: ['.js'],
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        test: /\.js$/i,
+        extractComments: false,
+        terserOptions: {
+          ecma: 2020,
+          compress: true,
+          mangle: {
+            reserved: ['global'],
+            keep_fnames: true, // Easier debugging in the browser
+          },
+          format: {
+            comments: /@customfunction/i,
+          },
+        },
+      }),
+    ],
   },
   performance: {
     hints: false,
@@ -53,27 +78,24 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: getSrcPath('Code.js'),
-          to: 'Code.js',
-        },
-        {
-          from: getSrcPath('./client/**/*.html'),
+          from: getSrcPath('**/*.html'),
           to: '[name][ext]',
           noErrorOnMissing: true,
         },
         {
-          from: getSrcPath('./client/style.css'),
-          to: '[name].html',
-          noErrorOnMissing: true,
-        },
-        {
-          from: getSrcPath('./client/script.js'),
-          to: '[name].html',
+          from: getSrcPath('**/*.css'),
+          to: '[name][ext]',
           noErrorOnMissing: true,
         },
         {
           from: getSrcPath('../appsscript.json'),
           to: '[name][ext]',
+        },
+        {
+          from: getSrcPath('../functions/*.js'),
+          to: '[name][ext]',
+          noErrorOnMissing: true,
+          info: { minimized: true },
         },
         {
           from: getSrcPath('../node_modules/apps-script-oauth2/dist/OAuth2.gs'),
